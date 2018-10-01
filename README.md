@@ -2,6 +2,8 @@
 
 This project is a transpiler able to transform your Java codebase to TypeScript and then to JavaScript to ultimatly run Java code in the browser.
 
+> NB: **JDK 8 or below**
+
 ### What is it for ?
 
 The goal of J2TS is to share a codebase between Java, TypeScript and Javascript.
