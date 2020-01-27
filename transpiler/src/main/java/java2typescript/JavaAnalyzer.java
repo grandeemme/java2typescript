@@ -16,9 +16,12 @@
 package java2typescript;
 
 import com.intellij.codeInsight.ContainerProvider;
+import com.intellij.codeInsight.JavaContainerProvider;
 import com.intellij.codeInsight.runner.JavaMainMethodProvider;
 import com.intellij.core.*;
 import com.intellij.lang.MetaLanguage;
+import com.intellij.lang.jvm.facade.JvmElementProvider;
+import com.intellij.mock.MockProject;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
@@ -29,127 +32,79 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.TypeAnnotationModifier;
 import com.intellij.psi.compiled.ClassFileDecompilers;
-import com.intellij.psi.impl.*;
+import com.intellij.psi.impl.PsiElementFinderImpl;
+import com.intellij.psi.impl.PsiNameHelperImpl;
+import com.intellij.psi.impl.PsiTreeChangePreprocessor;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
-import com.intellij.psi.util.JavaClassSupers;
 
 import java.io.File;
 
 public class JavaAnalyzer {
 
-    //private JavaCoreProjectEnvironment environment;
+    private JavaCoreApplicationEnvironment appEnvironment;
+    private JavaCoreProjectEnvironment javaEnvironment;
 
     public JavaAnalyzer() {
-
-/*
-        Disposable parentDisposable = () -> {
+        Disposable d = () -> {
         };
-        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), MetaLanguage.EP_NAME, MetaLanguage.class);
-        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ContainerProvider.EP_NAME, ContainerProvider.class);
-        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), TypeAnnotationModifier.EP_NAME, TypeAnnotationModifier.class);
-        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
-        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
 
-        JavaCoreApplicationEnvironment javaApplicationEnvironment = new JavaCoreApplicationEnvironment(parentDisposable);
-        javaApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
-        javaApplicationEnvironment.registerParserDefinition(new JavaParserDefinition());
-        javaApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClsStubBuilderFactory.EP_NAME, ClsStubBuilderFactory.class);
-        javaApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
-        javaApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
-        javaApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ContainerProvider.EP_NAME, ContainerProvider.class);
-        javaApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
-        javaApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
+        ExtensionsArea area = Extensions.getRootArea();
+        CoreApplicationEnvironment.registerExtensionPoint(area, BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, FileContextProvider.EP_NAME, FileContextProvider.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, MetaDataContributor.EP_NAME, MetaDataContributor.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, ContainerProvider.EP_NAME, ContainerProvider.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, TypeAnnotationModifier.EP_NAME, TypeAnnotationModifier.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, MetaLanguage.EP_NAME, MetaLanguage.class);
+        CoreApplicationEnvironment.registerExtensionPoint(area, JavaModuleSystem.EP_NAME, JavaModuleSystem.class);
 
-        environment = new JavaCoreProjectEnvironment(parentDisposable, javaApplicationEnvironment) {
+        CoreApplicationEnvironment.registerApplicationExtensionPoint(ContainerProvider.EP_NAME, JavaContainerProvider.class);
+
+        appEnvironment = new JavaCoreApplicationEnvironment(d);
+        javaEnvironment = new JavaCoreProjectEnvironment(d, appEnvironment) {
             @Override
             protected void preregisterServices() {
-
-                super.preregisterServices();
-
-                if (!Extensions.getRootArea().hasExtensionPoint(DeepestSuperMethodsSearch.EP_NAME.getName())) {
-                    Extensions.getRootArea().registerExtensionPoint(DeepestSuperMethodsSearch.EP_NAME.getName(), DeepestSuperMethodsSearch.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
-                }
-                CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(getProject()), PsiElementFinder.EP_NAME, PsiElementFinder.class);
-                CoreApplicationEnvironment.registerExtensionPoint(Extensions.getArea(getProject()), PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-
+                ExtensionsArea a = Extensions.getArea(myProject);
+                CoreApplicationEnvironment.registerExtensionPoint(a, PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
+                CoreApplicationEnvironment.registerExtensionPoint(a, PsiElementFinder.EP_NAME, PsiElementFinder.class);
+                CoreApplicationEnvironment.registerExtensionPoint(a, JvmElementProvider.EP_NAME, JvmElementProvider.class);
             }
-        };*/
-
-        ExtensionsArea rootArea = Extensions.getRootArea();
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, FileContextProvider.EP_NAME, FileContextProvider.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, MetaDataContributor.EP_NAME, MetaDataContributor.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, PsiAugmentProvider.EP_NAME, PsiAugmentProvider.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, JavaMainMethodProvider.EP_NAME, JavaMainMethodProvider.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, ContainerProvider.EP_NAME, ContainerProvider.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, ClassFileDecompilers.EP_NAME, ClassFileDecompilers.Decompiler.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, TypeAnnotationModifier.EP_NAME, TypeAnnotationModifier.class);
-        CoreApplicationEnvironment.registerExtensionPoint(rootArea, MetaLanguage.EP_NAME, MetaLanguage.class);
-        applicationEnvironment = new ApplicationEnvironment(disposable);
-        environment = new ProjectEnvironment(disposable, applicationEnvironment);
-
-        System.setProperty("idea.use.native.fs.for.win","false");
+            @Override
+            protected void registerJavaPsiFacade() {
+                JavaFileManager javaFileManager = getProject().getComponent(JavaFileManager.class);
+                CoreJavaFileManager coreJavaFileManager = (CoreJavaFileManager) javaFileManager;
+                ServiceManager.getService(getProject(), CoreJavaFileManager.class);
+                getProject().registerService(CoreJavaFileManager.class, coreJavaFileManager);
+                getProject().registerService(PsiNameHelper.class, PsiNameHelperImpl.getInstance());
+                PsiElementFinder finder = new PsiElementFinderImpl(getProject(), coreJavaFileManager);
+                ExtensionsArea area = Extensions.getArea(getProject());
+                area.getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(finder);
+                super.registerJavaPsiFacade();
+            }
+        };
+        System.setProperty("idea.use.native.fs.for.win", "false");
     }
-
-    final ApplicationEnvironment applicationEnvironment;
-    final ProjectEnvironment environment;
-    static final Disposable disposable = () -> {
-    };
-
-    private static class ProjectEnvironment extends JavaCoreProjectEnvironment {
-        public ProjectEnvironment(Disposable parentDisposable, CoreApplicationEnvironment applicationEnvironment) {
-            super(parentDisposable, applicationEnvironment);
-        }
-
-        @Override
-        protected void registerJavaPsiFacade() {
-            JavaFileManager javaFileManager = getProject().getComponent(JavaFileManager.class);
-            CoreJavaFileManager coreJavaFileManager = (CoreJavaFileManager) javaFileManager;
-            ServiceManager.getService(getProject(), CoreJavaFileManager.class);
-            getProject().registerService(CoreJavaFileManager.class, coreJavaFileManager);
-            getProject().registerService(PsiNameHelper.class, PsiNameHelperImpl.getInstance());
-            PsiElementFinder finder = new PsiElementFinderImpl(getProject(), coreJavaFileManager);
-            ExtensionsArea area = Extensions.getArea(getProject());
-            area.getExtensionPoint(PsiElementFinder.EP_NAME).registerExtension(finder);
-            super.registerJavaPsiFacade();
-        }
-
-        @Override
-        protected void preregisterServices() {
-            super.preregisterServices();
-            ExtensionsArea area = Extensions.getArea(getProject());
-            CoreApplicationEnvironment.registerExtensionPoint(area, PsiTreeChangePreprocessor.EP_NAME, PsiTreeChangePreprocessor.class);
-            CoreApplicationEnvironment.registerExtensionPoint(area, PsiElementFinder.EP_NAME, PsiElementFinder.class);
-        }
-    }
-
-    private static class ApplicationEnvironment extends JavaCoreApplicationEnvironment {
-
-        public ApplicationEnvironment(Disposable parentDisposable) {
-            super(parentDisposable);
-            myApplication.registerService(JavaClassSupers.class, new JavaClassSupersImpl());
-        }
-    }
-
 
     public void addClasspath(String filePath) {
         File f = new File(filePath);
         if (f.exists()) {
             if (f.isDirectory()) {
-                environment.addSourcesToClasspath(environment.getEnvironment().getLocalFileSystem().findFileByIoFile(f));
+                javaEnvironment.addSourcesToClasspath(javaEnvironment.getEnvironment().getLocalFileSystem().findFileByIoFile(f));
             } else {
-                environment.addJarToClassPath(f);
+                javaEnvironment.addJarToClassPath(f);
             }
         }
     }
 
     public PsiDirectory analyze(File srcDir) {
-        VirtualFile vf = environment.getEnvironment().getLocalFileSystem().findFileByIoFile(srcDir);
+        VirtualFile vf = javaEnvironment.getEnvironment().getLocalFileSystem().findFileByIoFile(srcDir);
         if (vf != null) {
-            environment.addSourcesToClasspath(vf);
-            return PsiManager.getInstance(environment.getProject()).findDirectory(vf);
+            javaEnvironment.addSourcesToClasspath(vf);
+            return PsiManager.getInstance(javaEnvironment.getProject()).findDirectory(vf);
         }
         return null;
     }
