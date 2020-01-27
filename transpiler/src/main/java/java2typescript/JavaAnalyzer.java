@@ -32,12 +32,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.augment.PsiAugmentProvider;
 import com.intellij.psi.augment.TypeAnnotationModifier;
 import com.intellij.psi.compiled.ClassFileDecompilers;
+import com.intellij.psi.compiled.ClsStubBuilder;
+import com.intellij.psi.impl.JavaClassSupersImpl;
 import com.intellij.psi.impl.PsiElementFinderImpl;
 import com.intellij.psi.impl.PsiNameHelperImpl;
 import com.intellij.psi.impl.PsiTreeChangePreprocessor;
+import com.intellij.psi.impl.compiled.ClassFileStubBuilder;
+import com.intellij.psi.impl.compiled.ClsCustomNavigationPolicy;
 import com.intellij.psi.impl.file.impl.JavaFileManager;
+import com.intellij.psi.impl.java.stubs.ClsStubPsiFactory;
+import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.meta.MetaDataContributor;
 import com.intellij.psi.stubs.BinaryFileStubBuilders;
+import com.intellij.psi.util.JavaClassSupers;
 
 import java.io.File;
 
@@ -49,6 +56,10 @@ public class JavaAnalyzer {
     public JavaAnalyzer() {
         Disposable d = () -> {
         };
+
+        CoreApplicationEnvironment.registerExtensionPoint(Extensions.getRootArea(), ClsCustomNavigationPolicy.EP_NAME, ClsCustomNavigationPolicy.class);
+
+
 
         ExtensionsArea area = Extensions.getRootArea();
         CoreApplicationEnvironment.registerExtensionPoint(area, BinaryFileStubBuilders.EP_NAME, FileTypeExtensionPoint.class);
@@ -65,6 +76,8 @@ public class JavaAnalyzer {
         CoreApplicationEnvironment.registerApplicationExtensionPoint(ContainerProvider.EP_NAME, JavaContainerProvider.class);
 
         appEnvironment = new JavaCoreApplicationEnvironment(d);
+        appEnvironment.registerApplicationService(JavaClassSupers.class, new JavaClassSupersImpl());
+
         javaEnvironment = new JavaCoreProjectEnvironment(d, appEnvironment) {
             @Override
             protected void preregisterServices() {

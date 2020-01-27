@@ -26,6 +26,33 @@ import java.nio.file.Paths;
 
 public class SourceTranslatorTest {
 
+    /*
+    @Test
+    public void freestyle() throws IOException {
+
+        String source = "/home/duke/Documents/projects/greycat-java/greycat/greycat/src/main/java";
+        String target = Paths.get("target", "generated-sources", "java2ts").toAbsolutePath().toString();
+
+        SourceTranslator translator = new SourceTranslator(source, target, "generics");
+        translator.process();
+
+        String result = translator.getCtx().toString().trim();
+        //System.out.println(result);
+
+        BufferedReader br = new BufferedReader(new FileReader(Paths.get("src", "test", "resources", "generics", "output.ts").toFile()));
+        StringBuilder sb = new StringBuilder();
+        String line = null;
+        while ((line = br.readLine()) != null) {
+            sb.append('\n').append(line);
+        }
+
+        Assert.assertEquals(
+                sb.toString().substring(1),
+                result);
+
+    }
+    */
+
     @Test
     public void generics() throws IOException {
 
