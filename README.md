@@ -1,3 +1,8 @@
+```diff
+- This repository contains the legacy version of GreyCat. 
+! DataThings crew is about to disclose a new, faster, ligher native GreyCat. Stay tuned and follow us on twitter/facebook or
+```
+
 # Java To TypeScript Transpiler
 
 This project is a transpiler able to transform your Java codebase to TypeScript and then to JavaScript to ultimatly run Java code in the browser.
